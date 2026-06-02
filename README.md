@@ -13,7 +13,20 @@ This project will lay the foundation for me to pursue the complex UVM verificati
 
 ## Repository Structure
 
-Finish at the end
+```text
+
+Class-Based Non-UVM/
+├── top_tb.sv              # Top-level testbench: DUT, interface, clock, reset, test
+├── interface.sv           # FIFO interface signals
+├── transaction_item.sv    # FIFO transaction object
+├── generator.sv           # Creates randomized FIFO transactions
+├── driver.sv              # Drives transactions onto the DUT interface
+├── monitor.sv             # Samples DUT inputs/outputs
+├── scoreboard.sv          # Reference model and result checking
+├── environment.sv         # Connects generator, driver, monitor, scoreboard
+└── test.sv                # Instantiates and runs the environment
+
+```
 
 ---
 
