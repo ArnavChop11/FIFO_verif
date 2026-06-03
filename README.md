@@ -52,14 +52,24 @@ The FIFO includes:
 
 The goal of the verification process is to ensure that the FIFO behaves correctly across normal operation, boundary conditions, and invalid request scenarios.
 
-The verification environment should confirm that:
+The verification environment checks that:
 
-- Data is read out in the same order it was written
-- The FIFO correctly detects full and empty conditions
-- Read and write pointers wrap around correctly
+- Data is read out in FIFO order: first written, first read
+- The FIFO correctly asserts and deasserts `empty`
+- The FIFO correctly asserts and deasserts `full`
+- Valid writes are stored in the expected order
+- Valid reads return the oldest stored value
 - Simultaneous read/write operations behave correctly
-- Invalid reads and writes are handled safely
-- The design behaves correctly after reset
+- Reads while empty are safely ignored
+- Writes while full are safely ignored
+- The design initializes correctly after reset
+
+Future directed tests will further stress:
+
+- Pointer wraparound after many writes and reads
+- Sustained full-condition behavior
+- Sustained empty-condition behavior
+- Longer randomized regression runs
 
 ---
 
@@ -67,23 +77,28 @@ The verification environment should confirm that:
 
 #### Simulation Environment
 
-The FIFO will be verified using SystemVerilog simulation. The project will include both a custom SystemVerilog testbench and a UVM-based testbench.
+The FIFO is verified using SystemVerilog simulation. The project currently includes a custom class-based non-UVM testbench.
 
-The custom testbench will be developed first to build the verification flow manually. The UVM testbench will later recreate the same structure using standard UVM methodology.
+The custom testbench was developed first to manually build the verification flow and better understand how generators, drivers, monitors, scoreboards, mailboxes, events, and virtual interfaces work together.
 
-#### Verification Components
+A UVM-based testbench will later recreate the same verification structure using standard UVM methodology.
 
-The custom verification environment is planned to include:
+#### Non-UVM Verification Components
+
+The custom non-UVM verification environment includes:
 
 | Component | Purpose |
 |---|---|
-| Transaction | Represents one FIFO operation |
-| Generator | Creates directed and randomized transactions |
-| Driver | Drives FIFO inputs based on transactions |
-| Monitor | Observes FIFO inputs and outputs |
-| Scoreboard | Compares DUT behavior against expected behavior |
-| Reference Model | Models correct FIFO behavior |
-| Testbench Top | Connects the DUT, interface, and verification components |
+| Interface | Groups FIFO DUT signals and provides access through a virtual interface |
+| Transaction Item | Represents one FIFO operation, including input stimulus and observed DUT outputs |
+| Generator | Creates randomized FIFO transactions |
+| Driver | Receives transactions from the generator and drives FIFO inputs |
+| Monitor | Samples FIFO inputs and outputs after each clocked operation |
+| Scoreboard | Checks DUT behavior against expected FIFO behavior |
+| Reference Model | Implemented inside the scoreboard using a SystemVerilog queue |
+| Environment | Connects the generator, driver, monitor, scoreboard, mailboxes, event, and virtual interface |
+| Test | Instantiates and runs the environment |
+| Testbench Top | Instantiates the DUT, interface, clock, reset, and test |
 
 The UVM environment is planned to include:
 
@@ -98,22 +113,6 @@ The UVM environment is planned to include:
 | Scoreboard | Checks correctness |
 | Environment | Top-level UVM verification container |
 | Test | Defines the specific verification scenario |
-
-#### Simulation Flow
-
-The general simulation flow is:
-
-```text
-Reset DUT
-Generate FIFO transactions
-Drive read/write operations
-Monitor DUT behavior
-Update reference model
-Compare actual output against expected output
-Collect coverage
-Report pass/fail status
-
-```
 
 ---
 
